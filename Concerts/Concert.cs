@@ -9,5 +9,6 @@ public class Concert {
     public required DateTime StartTime { get; set; }
     public DateTime? ExpectedEndTime { get; set; }
     public string? Notes { get; set; }
+    public ConcertStatus Status { get; set; }
 }
 

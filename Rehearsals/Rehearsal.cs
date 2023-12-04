@@ -7,4 +7,6 @@ public class Rehearsal {
     public required DateTime StartTime { get; set; }
     public required DateTime EndTime { get; set; }
     public string? Notes { get; set; }
+    public RehearsalStatus Status { get; set; }
+    public RehearsalType Type { get; set; }
 }
