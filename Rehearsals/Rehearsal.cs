@@ -1,3 +1,5 @@
+using PlanningService.Common;
+
 namespace PlanningService.Rehearsals;
 
 public class Rehearsal {

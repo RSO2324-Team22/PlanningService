@@ -4,6 +4,6 @@ public enum ConcertStatus {
     Proposed,
     InArrangement,
     AwaitingApproval,
-    Finalized,
+    Confirmed,
     Cancelled
 }

@@ -1,3 +1,5 @@
+using PlanningService.Common;
+
 namespace PlanningService.Concerts;
 
 public class Concert {

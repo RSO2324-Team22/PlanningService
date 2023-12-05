@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "planning_service"
+  namespace: default
+  labels:
+    app: "planning_service"
+spec:
+  containers:
+  - name: planning_service
+    image: "pusti/rso2324-team22-planning-service:0.0.1"
+    ports:
+    - containerPort: 80
+      name:  http
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: planning_service
+spec:
+  selector:
+    app: planning_service
+  ports:
+    - procotol: TCP
+      port: 80
+      targetPort: http

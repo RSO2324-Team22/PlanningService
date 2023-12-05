@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace PlanningService;
+namespace PlanningService.Common;
 
 [Owned]
 public class Location {
