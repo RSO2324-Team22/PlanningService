@@ -17,7 +17,7 @@ jobs:
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
-        username: pusti
+        username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag pusti/rso2324-team22-planning-service:$(date +%s)
