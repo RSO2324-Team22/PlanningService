@@ -19,6 +19,7 @@ public class ConcertController : ControllerBase {
     }
 
     [HttpGet(Name = "GetConcerts")]
+    [Route("all")]
     [Route("")]
     public async Task<IEnumerable<Concert>> GetConcerts()
     {
