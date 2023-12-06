@@ -26,6 +26,21 @@ public class ConcertController : ControllerBase {
         return await this._dbContext.Concerts.ToListAsync();
     }
 
+    [HttpPost(Name = "AddConcert")]
+    public async Task<string> Add([FromBody] Concert newConcert)
+    {
+        try
+        {
+            this._dbContext.Concerts.Add(newConcert);
+            await this._dbContext.SaveChangesAsync();
+            return "Koncert uspešno dodan.";
+        }
+        catch
+        {
+            return "Napaka pri dodajanju koncerta.";
+        }
+    }
+
     [HttpGet(Name = "GetConfirmedConcerts")]
     [Route("confirmed")]
     public async Task<IEnumerable<Concert>> GetConfirmedConcerts()
