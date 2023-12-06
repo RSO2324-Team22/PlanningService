@@ -25,7 +25,7 @@ spec:
               key: postgres_planning_database
         - name: POSTGRES_USERNAME
           valueFrom:
-            configMapKeyRef:
+            secretKeyRef:
               name: postgres-secrets
               key: postgres_username
         - name: POSTGRES_PASSWORD
