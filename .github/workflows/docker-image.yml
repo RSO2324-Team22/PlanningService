@@ -1,0 +1,29 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: pusti
+        password: ${{ secrets.DOCKER_TOKEN }}
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag pusti/rso2324-team22-planning-service:$(date +%s)
+    - name: Make the `latest` tag
+      run: docker build . --file Dockerfile --tag pusti/rso2324-team22-planning-service:latest
+    - name: Push Docker image
+      run: docker push pusti/rso2324-team22-planning-service:$(date +%s)
+    - name: Push the `latest` tag
+      run: docker push pusti/rso2324-team22-planning-service:latest
