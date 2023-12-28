@@ -3,7 +3,7 @@ using PlanningService.Common;
 namespace PlanningService.Rehearsals;
 
 public class Rehearsal {
-    public int Id { get; private set; }
+    public int Id { get; init; }
     public required string Title { get; set; }
     public required Location Location { get; set; }
     public required DateTime StartTime { get; set; }

@@ -3,7 +3,7 @@ using PlanningService.Common;
 namespace PlanningService.Concerts;
 
 public class Concert {
-    public int Id { get; private set; }
+    public int Id { get; init; }
     public required string Title { get; set; }
     public required Location Location { get; set; }
     public DateTime? MeetupTime { get; set; }
