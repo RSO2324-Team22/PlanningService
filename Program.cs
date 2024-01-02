@@ -1,3 +1,4 @@
+using Confluent.Kafka;
 using GraphQL.AspNet.Configuration;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,8 @@ string postgres_password = builder.Configuration["POSTGRES_PASSWORD"] ?? "";
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddGraphQL();
+builder.Services.AddKafkaClient();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
