@@ -1,3 +1,4 @@
+using GraphQL.AspNet.Configuration;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
@@ -12,6 +13,7 @@ string postgres_password = builder.Configuration["POSTGRES_PASSWORD"] ?? "";
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddGraphQL();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,5 +41,6 @@ app.MapHealthChecks("/health/startup", new HealthCheckOptions {
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseGraphQL();
 
 app.Run();
