@@ -46,7 +46,7 @@ public class RehearsalController : ControllerBase {
     }
 
     [HttpGet(Name = "GetConfirmedExtraRehearsals")]
-    [Route("confirmed/intensive")]
+    [Route("confirmed/extra")]
     public async Task<IEnumerable<Rehearsal>> GetConfirmedExtra() {
         return await this._dbContext.Rehearsals
             .Where(r => r.Status == RehearsalStatus.Confirmed &&
