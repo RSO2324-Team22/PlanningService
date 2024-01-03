@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GraphQL.AspNet.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -49,9 +50,10 @@ class EnumJsonValueConverter<T> : ValueConverter<T, string>
     public EnumJsonValueConverter() : base(
         v => JsonSerializer
             .Serialize(v.ToString(), (JsonSerializerOptions) null),
-        v => JsonSerializer
-            .Deserialize<T>(v, (JsonSerializerOptions) null)
-            ) {}
+        v => JsonSerializer 
+            .Deserialize<string>(v, (JsonSerializerOptions) null)
+            .AsEnumerable()
+            .Select(e => Enum.Parse<T>(e)).Single()) {}
 }
 
 class EnumValueComparer<T> : ValueComparer<T>
