@@ -2,11 +2,12 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace PlanningService.Rehearsals;
 
 [ApiController]
-[Route("rehearsals")]
+[Route("[controller]")]
 public class RehearsalController : ControllerBase {
     private readonly ILogger<RehearsalController> _logger;
     private readonly PlanningDbContext _dbContext;
@@ -21,23 +22,24 @@ public class RehearsalController : ControllerBase {
         this._kafkaProducer = kafkaProducer;
     }
 
-    [HttpGet(Name = "GetRehearsals")]
-    [Route("all")]
-    [Route("")]
-    public async Task<IEnumerable<Rehearsal>> All() {
+    [HttpGet]
+    [SwaggerOperation("GetRehearsals")]
+    public async Task<IEnumerable<Rehearsal>> GetRehearsals() {
         return await this._dbContext.Rehearsals.ToListAsync();
     }
 
-    [HttpGet(Name = "GetConfirmedRehearsals")]
+    [HttpGet]
     [Route("confirmed")]
+    [SwaggerOperation("GetConfirmedRehearsals")]
     public async Task<IEnumerable<Rehearsal>> GetConfirmed() {
         return await this._dbContext.Rehearsals
             .Where(r => r.Status == RehearsalStatus.Confirmed)
             .ToListAsync();
     }
 
-    [HttpGet(Name = "GetConfirmedIntensiveRehearsals")]
+    [HttpGet]
     [Route("confirmed/intensive")]
+    [SwaggerOperation("GetConfirmedIntensiveRehearsals")]
     public async Task<IEnumerable<Rehearsal>> GetConfirmedIntensive() {
         return await this._dbContext.Rehearsals
             .Where(r => r.Status == RehearsalStatus.Confirmed &&
@@ -45,8 +47,9 @@ public class RehearsalController : ControllerBase {
             .ToListAsync();
     }
 
-    [HttpGet(Name = "GetConfirmedExtraRehearsals")]
+    [HttpGet]
     [Route("confirmed/extra")]
+    [SwaggerOperation("GetConfirmedExtraRehearsals")]
     public async Task<IEnumerable<Rehearsal>> GetConfirmedExtra() {
         return await this._dbContext.Rehearsals
             .Where(r => r.Status == RehearsalStatus.Confirmed &&
@@ -54,8 +57,8 @@ public class RehearsalController : ControllerBase {
             .ToListAsync();
     }
 
-    [HttpPost(Name = "AddRehearsal")]
-    [Route("")]
+    [HttpPost]
+    [SwaggerOperation("AddRehearsal")]
     public async Task<Rehearsal> Add([FromBody] CreateRehearsalModel model) {
         Rehearsal rehearsal = new Rehearsal {
             Title = model.Title,
@@ -77,8 +80,9 @@ public class RehearsalController : ControllerBase {
         return rehearsal;
     }
 
-    [HttpPut(Name = "EditRehearsal")]
-    [Route("[id]")]
+    [HttpPut]
+    [Route("{id}")]
+    [SwaggerOperation("EditRehearsal")]
     public async Task<Rehearsal> Add(int id, [FromBody] CreateRehearsalModel model) {
         Rehearsal rehearsal = await this._dbContext.Rehearsals
             .Where(r => r.Id == id)
@@ -101,8 +105,9 @@ public class RehearsalController : ControllerBase {
         return rehearsal;
     }
 
-    [HttpDelete(Name = "DeleteRehearsal")]
-    [Route("[id]")]
+    [HttpDelete]
+    [Route("{id}")]
+    [SwaggerOperation("DeleteRehearsal")]
     public async Task<Rehearsal> Add(int id) {
         Rehearsal rehearsal = await this._dbContext.Rehearsals
             .Where(r => r.Id == id)

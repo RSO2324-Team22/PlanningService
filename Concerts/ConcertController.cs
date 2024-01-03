@@ -2,11 +2,12 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace PlanningService.Concerts;
 
 [ApiController]
-[Route("concerts")]
+[Route("[controller]")]
 public class ConcertController : ControllerBase {
     private readonly ILogger<ConcertController> _logger;
     private readonly PlanningDbContext _dbContext;
@@ -21,16 +22,16 @@ public class ConcertController : ControllerBase {
         this._kafkaProducer = kafkaProducer;
     }
 
-    [HttpGet(Name = "GetConcerts")]
-    [Route("all")]
-    [Route("")]
+    [HttpGet]
+    [SwaggerOperation("GetConcerts")]
     public async Task<IEnumerable<Concert>> GetConcerts()
     {
         return await this._dbContext.Concerts.ToListAsync();
     }
 
-    [HttpGet(Name = "GetConfirmedConcerts")]
+    [HttpGet]
     [Route("confirmed")]
+    [SwaggerOperation("GetConfirmedConcerts")]
     public async Task<IEnumerable<Concert>> GetConfirmedConcerts()
     {
         return await this._dbContext.Concerts
@@ -38,8 +39,8 @@ public class ConcertController : ControllerBase {
             .ToListAsync();
     }
 
-    [HttpPost(Name = "AddConcert")]
-    [Route("")]
+    [HttpPost]
+    [SwaggerOperation("AddConcert")]
     public async Task<Concert> Add([FromBody] CreateConcertModel model)
     {
         Concert concert = new Concert {
@@ -63,8 +64,9 @@ public class ConcertController : ControllerBase {
         return concert;
     }
 
-    [HttpPut(Name = "EditConcert")]
-    [Route("[id]")]
+    [HttpPut]
+    [Route("{id}")]
+    [SwaggerOperation("EditConcert")]
     public async Task<Concert> Add(int id, [FromBody] CreateConcertModel model)
     {
         Concert concert = await this._dbContext.Concerts
@@ -89,8 +91,9 @@ public class ConcertController : ControllerBase {
         return concert;
     }
 
-    [HttpDelete(Name = "DeleteConcert")]
-    [Route("[id]")]
+    [HttpDelete]
+    [Route("{id}")]
+    [SwaggerOperation("DeleteConcert")]
     public async Task<Concert> Add(int id)
     {
         Concert concert = await this._dbContext.Concerts
