@@ -25,39 +25,39 @@ public class PlanningDbContext : DbContext {
 
         modelBuilder.Entity<Concert>()
             .Property(c => c.Status)
-            .HasConversion(new EnumCollectionJsonValueConverter<ConcertStatus>())
-            .Metadata.SetValueComparer(new CollectionValueComparer<ConcertStatus>());
+            .HasConversion(new EnumJsonValueConverter<ConcertStatus>())
+            .Metadata.SetValueComparer(new EnumValueComparer<ConcertStatus>());
 
         modelBuilder.Entity<Rehearsal>().OwnsOne(c => c.Location);
         
         modelBuilder.Entity<Rehearsal>()
             .Property(c => c.Status)
-            .HasConversion(new EnumCollectionJsonValueConverter<RehearsalStatus>())
-            .Metadata.SetValueComparer(new CollectionValueComparer<RehearsalStatus>());
+            .HasConversion(new EnumJsonValueConverter<RehearsalStatus>())
+            .Metadata.SetValueComparer(new EnumValueComparer<RehearsalStatus>());
         
         modelBuilder.Entity<Rehearsal>()
             .Property(c => c.Type)
-            .HasConversion(new EnumCollectionJsonValueConverter<RehearsalType>())
-            .Metadata.SetValueComparer(new CollectionValueComparer<RehearsalType>());
+            .HasConversion(new EnumJsonValueConverter<RehearsalType>())
+            .Metadata.SetValueComparer(new EnumValueComparer<RehearsalType>());
     }
 }
 
-class EnumCollectionJsonValueConverter<T> : ValueConverter<IEnumerable<T>, string> 
-where T : struct, Enum
+
+class EnumJsonValueConverter<T> : ValueConverter<T, string> 
+    where T : struct, Enum
 {
-    public EnumCollectionJsonValueConverter() : base(
+    public EnumJsonValueConverter() : base(
         v => JsonSerializer
-            .Serialize(v.Select(e => e.ToString()).ToList(), (JsonSerializerOptions) null),
+            .Serialize(v.ToString(), (JsonSerializerOptions) null),
         v => JsonSerializer
-            .Deserialize<IEnumerable<string>>(v, (JsonSerializerOptions) null)
-            .Select(e => Enum.Parse<T>(e)).ToHashSet()) {}
+            .Deserialize<T>(v, (JsonSerializerOptions) null)
+            ) {}
 }
 
-class CollectionValueComparer<T> : ValueComparer<IEnumerable<T>>
+class EnumValueComparer<T> : ValueComparer<T>
 {
-    public CollectionValueComparer() : base(
-        (c1, c2) => c1.SequenceEqual(c2),
-        c => c.Aggregate(0, 
-            (a, v) => HashCode.Combine(a, v.GetHashCode())), 
-                c => (IEnumerable<T>)c.ToHashSet()) {}
+    public EnumValueComparer() : base(
+        (c1, c2) => c1.Equals(c2),
+        c => c.GetHashCode(), 
+        c => c) {}
 }
