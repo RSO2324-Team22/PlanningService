@@ -59,7 +59,7 @@ public class RehearsalController : ControllerBase {
 
     [HttpPost]
     [SwaggerOperation("AddRehearsal")]
-    public async Task<Rehearsal> Add([FromBody] CreateRehearsalModel model) {
+    public async Task<IResult> AddRehearsal([FromBody] CreateRehearsalModel model) {
         Rehearsal rehearsal = new Rehearsal {
             Title = model.Title,
             Location = model.Location,
@@ -70,23 +70,39 @@ public class RehearsalController : ControllerBase {
             Type = Enum.Parse<RehearsalType>(model.Type ?? "Regular")
         };
 
-        this._dbContext.Rehearsals.Add(rehearsal);
-        Message<string, int> addRehearsalMessage = new Message<string, int>() {
-            Key = "add_rehearsal",
-            Value = rehearsal.Id
-        };
-        await this._kafkaProducer.ProduceAsync("rehearsals", addRehearsalMessage);
-        await this._dbContext.SaveChangesAsync();
-        return rehearsal;
+        try
+        {
+            this._dbContext.Rehearsals.Add(rehearsal);
+            await this._dbContext.SaveChangesAsync();
+            Message<string, int> addRehearsalMessage = new Message<string, int>() {
+                Key = "add_rehearsal",
+                Value = rehearsal.Id
+            };
+            await this._kafkaProducer.ProduceAsync("rehearsals", addRehearsalMessage);
+            this._logger.LogInformation("Created new rehearsal");
+            return Results.Created(nameof(Index), rehearsal);
+        }
+        catch (Exception e)
+        {
+            const string errMsg = "There was a problem adding new Concert";
+            this._logger.LogError(e, errMsg);
+            return Results.BadRequest(errMsg);
+        }
     }
 
     [HttpPut]
     [Route("{id}")]
     [SwaggerOperation("EditRehearsal")]
-    public async Task<Rehearsal> Add(int id, [FromBody] CreateRehearsalModel model) {
-        Rehearsal rehearsal = await this._dbContext.Rehearsals
+    public async Task<IResult> EditRehearsal(int id, [FromBody] CreateRehearsalModel model) {
+        Rehearsal? rehearsal = await this._dbContext.Rehearsals
             .Where(r => r.Id == id)
-            .SingleAsync();
+            .SingleOrDefaultAsync();
+
+        if (rehearsal == null)
+        {
+            this._logger.LogInformation("Rehearsal with id: {id} does not exist", id);
+            return Results.BadRequest();
+        }
 
         rehearsal.Title = model.Title;
         rehearsal.Location = model.Location;
@@ -96,30 +112,48 @@ public class RehearsalController : ControllerBase {
         rehearsal.Status = Enum.Parse<RehearsalStatus>(model.Status ?? "Planned");
         rehearsal.Type = Enum.Parse<RehearsalType>(model.Type ?? "Regular");
 
-        Message<string, int> editRehearsalMessage = new Message<string, int>() {
-            Key = "edit_rehearsal",
-            Value = rehearsal.Id
-        };
-        await this._kafkaProducer.ProduceAsync("rehearsals", editRehearsalMessage);
-        await this._dbContext.SaveChangesAsync();
-        return rehearsal;
+        try
+        {
+            await this._dbContext.SaveChangesAsync();
+            Message<string, int> editRehearsalMessage = new Message<string, int>() {
+                Key = "edit_rehearsal",
+                Value = rehearsal.Id
+            };
+            await this._kafkaProducer.ProduceAsync("rehearsals", editRehearsalMessage);
+            this._logger.LogInformation("Edited rehearsal with id: {id}", id);
+            return Results.Created(nameof(Index), rehearsal);
+        }
+        catch (Exception e)
+        {
+            this._logger.LogError(e, "There was an error editing rehearsal with id: {id}", id);
+            return Results.BadRequest($"There was an error editing rehearsal with id: {id}");
+        }
     }
 
     [HttpDelete]
     [Route("{id}")]
     [SwaggerOperation("DeleteRehearsal")]
-    public async Task<Rehearsal> Add(int id) {
+    public async Task<IResult> DeleteRehearsal(int id) {
         Rehearsal rehearsal = await this._dbContext.Rehearsals
             .Where(r => r.Id == id)
             .SingleAsync();
 
-        this._dbContext.Remove(rehearsal);
-        Message<string, int> deleteRehearsalMessage = new Message<string, int>() {
-            Key = "delete_rehearsal",
-            Value = rehearsal.Id
-        };
-        await this._kafkaProducer.ProduceAsync("rehearsals", deleteRehearsalMessage);
-        await this._dbContext.SaveChangesAsync();
-        return rehearsal;
+        try
+        {
+            this._dbContext.Remove(rehearsal);
+            Message<string, int> deleteRehearsalMessage = new Message<string, int>() {
+                Key = "delete_rehearsal",
+                Value = rehearsal.Id
+            };
+            await this._kafkaProducer.ProduceAsync("rehearsals", deleteRehearsalMessage);
+            await this._dbContext.SaveChangesAsync();
+            this._logger.LogInformation("Deleted rehearsal with id: {id}", id);
+            return Results.Ok(rehearsal);
+        }
+        catch (Exception e)
+        {
+            this._logger.LogError(e, "There was an error deleting rehearsal with id: {id}", id);
+            return Results.BadRequest($"There was an error deleting rehearsal with id: {id}");
+        }
     }
 }
