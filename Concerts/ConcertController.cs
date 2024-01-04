@@ -30,6 +30,16 @@ public class ConcertController : ControllerBase {
     }
 
     [HttpGet]
+    [Route("{id}")]
+    [SwaggerOperation("GetConcertById")]
+    public async Task<Concert> GetConcertsId(int id)
+    {
+        return await this._dbContext.Concerts
+            .Where(c => c.Id == id)
+            .SingleAsync();
+    }
+
+    [HttpGet]
     [Route("confirmed")]
     [SwaggerOperation("GetConfirmedConcerts")]
     public async Task<ActionResult<IEnumerable<Concert>>> GetConfirmedConcerts()
@@ -56,12 +66,12 @@ public class ConcertController : ControllerBase {
         Concert concert = new Concert {
             Title = model.Title,
             Location = model.Location,
-            MeetupTime = model.MeetupTime,
-            SoundCheckTime = model.SoundCheckTime,
-            StartTime = model.StartTime,
-            ExpectedEndTime = model.ExpectedEndTime,
+            MeetupTime = model.MeetupTime.ToUniversalTime(),
+            SoundCheckTime = model.SoundCheckTime.ToUniversalTime(),
+            StartTime = model.StartTime.ToUniversalTime(),
+            ExpectedEndTime = model.ExpectedEndTime.ToUniversalTime(),
             Notes = model.Notes,
-            Status = Enum.Parse<ConcertStatus>(model.Status ?? "Proposed")
+            Status = model.Status
         };
 
         try
@@ -101,12 +111,12 @@ public class ConcertController : ControllerBase {
 
         concert.Title = model.Title;
         concert.Location = model.Location;
-        concert.MeetupTime = model.MeetupTime;
-        concert.SoundCheckTime = model.SoundCheckTime;
-        concert.StartTime = model.StartTime;
-        concert.ExpectedEndTime = model.ExpectedEndTime;
+        concert.MeetupTime = model.MeetupTime.ToUniversalTime();
+        concert.SoundCheckTime = model.SoundCheckTime.ToUniversalTime();
+        concert.StartTime = model.StartTime.ToUniversalTime();
+        concert.ExpectedEndTime = model.ExpectedEndTime.ToUniversalTime();
         concert.Notes = model.Notes;
-        concert.Status = Enum.Parse<ConcertStatus>(model.Status ?? "Proposed");
+        concert.Status = model.Status;
 
         try
         {
