@@ -8,6 +8,6 @@ public class CreateRehearsalModel {
     public required DateTime StartTime { get; set; }
     public required DateTime EndTime { get; set; }
     public string? Notes { get; set; }
-    public string? Status { get; set; }
-    public string Type { get; set; }
+    public RehearsalStatus Status { get; set; }
+    public RehearsalType Type { get; set; }
 }

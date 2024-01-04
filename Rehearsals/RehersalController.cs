@@ -57,17 +57,26 @@ public class RehearsalController : ControllerBase {
             .ToListAsync();
     }
 
+    [HttpGet]
+    [Route("{id}")]
+    [SwaggerOperation("GetRehearsalById")]
+    public async Task<Rehearsal> GetRehearsalById(int id) {
+        return await this._dbContext.Rehearsals
+            .Where(r => r.Id == id)
+            .SingleAsync();
+    }
+
     [HttpPost]
     [SwaggerOperation("AddRehearsal")]
     public async Task<IResult> AddRehearsal([FromBody] CreateRehearsalModel model) {
         Rehearsal rehearsal = new Rehearsal {
             Title = model.Title,
             Location = model.Location,
-            StartTime = model.StartTime,
-            EndTime = model.EndTime,
+            StartTime = model.StartTime.ToUniversalTime(),
+            EndTime = model.EndTime.ToUniversalTime(),
             Notes = model.Notes,
-            Status = Enum.Parse<RehearsalStatus>(model.Status ?? "Planned"),
-            Type = Enum.Parse<RehearsalType>(model.Type ?? "Regular")
+            Status = model.Status,
+            Type = model.Type
         };
 
         try
@@ -106,11 +115,11 @@ public class RehearsalController : ControllerBase {
 
         rehearsal.Title = model.Title;
         rehearsal.Location = model.Location;
-        rehearsal.StartTime = model.StartTime;
-        rehearsal.EndTime = model.EndTime;
+        rehearsal.StartTime = model.StartTime.ToUniversalTime();
+        rehearsal.EndTime = model.EndTime.ToUniversalTime();
         rehearsal.Notes = model.Notes;
-        rehearsal.Status = Enum.Parse<RehearsalStatus>(model.Status ?? "Planned");
-        rehearsal.Type = Enum.Parse<RehearsalType>(model.Type ?? "Regular");
+        rehearsal.Status = model.Status;
+        rehearsal.Type = model.Type;
 
         try
         {
