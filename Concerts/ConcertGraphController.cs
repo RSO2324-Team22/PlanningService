@@ -18,16 +18,19 @@ public class ConcertGraphController : GraphController
         this._dbContext = dbContext;
     }
 
+    [Query]
     public async Task<IEnumerable<Concert>> All() {
         return await this._dbContext.Concerts.ToListAsync();
     }
 
+    [Query]
     public async Task<Concert> Concert(int id) {
         return await this._dbContext.Concerts
             .Where(c => c.Id == id)
             .SingleAsync();
     }
-
+    
+    [Query]
     public async Task<IEnumerable<Concert>> Concerts(ICollection<int> ids) {
         return await this._dbContext.Concerts
             .Where(c => ids.Contains(c.Id))
