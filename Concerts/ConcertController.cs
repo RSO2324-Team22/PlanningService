@@ -26,17 +26,25 @@ public class ConcertController : ControllerBase {
     [SwaggerOperation("GetConcerts")]
     public async Task<IEnumerable<Concert>> GetConcerts()
     {
+        this._logger.LogInformation("Getting all concerts");
         return await this._dbContext.Concerts.ToListAsync();
     }
 
     [HttpGet]
     [Route("{id}")]
     [SwaggerOperation("GetConcertById")]
-    public async Task<Concert> GetConcertsId(int id)
+    public async Task<ActionResult<Concert>> GetConcertById(int id)
     {
-        return await this._dbContext.Concerts
+        this._logger.LogInformation("Getting concert {id}", id);
+        Concert? concert = await this._dbContext.Concerts
             .Where(c => c.Id == id)
-            .SingleAsync();
+            .SingleOrDefaultAsync();
+
+        if (concert is null) {
+            return NotFound();
+        }
+
+        return concert;
     }
 
     [HttpGet]
@@ -44,6 +52,7 @@ public class ConcertController : ControllerBase {
     [SwaggerOperation("GetConfirmedConcerts")]
     public async Task<ActionResult<IEnumerable<Concert>>> GetConfirmedConcerts()
     {
+        this._logger.LogInformation("Getting concerts with Confirmed status");
         try
         {
             var concerts = await this._dbContext.Concerts
@@ -53,7 +62,7 @@ public class ConcertController : ControllerBase {
         }
         catch (Exception e)
         {
-            const string errMsg = "There was a problem fetching confirmed concerts";
+            const string errMsg = "Error while fetching concerts";
             this._logger.LogError(e, errMsg);
             return BadRequest(errMsg);
         }
@@ -61,8 +70,9 @@ public class ConcertController : ControllerBase {
 
     [HttpPost]
     [SwaggerOperation("AddConcert")]
-    public async Task<IResult> AddConcert([FromBody] CreateConcertModel model)
+    public async Task<ActionResult<Concert>> AddConcert([FromBody] CreateConcertModel model)
     {
+        this._logger.LogInformation("Adding new concert");
         Concert concert = new Concert {
             Title = model.Title,
             Location = model.Location,
@@ -82,31 +92,32 @@ public class ConcertController : ControllerBase {
                 Key = "add_concert",
                 Value = concert.Id
             };
-            await this._kafkaProducer.ProduceAsync("concerts", addConcertMessage);
-            this._logger.LogInformation("Added new concert");
-            return Results.Created(nameof(Index), concert);
+            this._kafkaProducer.Produce("concerts", addConcertMessage);
+            this._logger.LogInformation("Added concert {id}", concert.Id);
+            return CreatedAtAction(nameof(GetConcertById), concert);
         }
         catch (Exception e)
         {
-            const string errMsg = "There was a problem adding new Concert";
+            const string errMsg = "Error while adding concert";
             this._logger.LogError(e, errMsg);
-            return Results.BadRequest(errMsg);
+            return BadRequest(errMsg);
         }
     }
 
     [HttpPut]
     [Route("{id}")]
     [SwaggerOperation("EditConcert")]
-    public async Task<IResult> EditConcert(int id, [FromBody] CreateConcertModel model)
+    public async Task<ActionResult<Concert>> EditConcert(int id, [FromBody] CreateConcertModel model)
     {
+        this._logger.LogInformation("Editing concert {id}", id);
         Concert? concert = await this._dbContext.Concerts
             .Where(c => c.Id == id)
             .SingleOrDefaultAsync();
 
-        if (concert == null)
+        if (concert is null)
         {
-            this._logger.LogInformation("Concert with id: {id} does not exist");
-            return Results.BadRequest();
+            this._logger.LogInformation("Concert {id} does not exist", id);
+            return NotFound();
         }
 
         concert.Title = model.Title;
@@ -125,30 +136,31 @@ public class ConcertController : ControllerBase {
                 Key = "edit_concert",
                 Value = concert.Id
             };
-            await this._kafkaProducer.ProduceAsync("concerts", editConcertMessage);
-            this._logger.LogInformation("Edited concert with id: {id}", id);
-            return Results.Created(nameof(Index), concert);;
+            this._kafkaProducer.Produce("concerts", editConcertMessage);
+            this._logger.LogInformation("Updated concert {id}", id);
+            return Ok(concert);
         }
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error editing concert with id: {id}", id);
-            return Results.BadRequest($"There was an error editing concert with id: {id}");
+            return BadRequest($"There was an error editing concert with id: {id}");
         }
     }
 
     [HttpDelete]
     [Route("{id}")]
     [SwaggerOperation("DeleteConcert")]
-    public async Task<IResult> DeleteConcert(int id)
+    public async Task<ActionResult<Concert>> DeleteConcert(int id)
     {
-        Concert concert = await this._dbContext.Concerts
+        this._logger.LogInformation("Deleting concert {id}", id);
+        Concert? concert = await this._dbContext.Concerts
             .Where(c => c.Id == id)
-            .SingleAsync();
+            .SingleOrDefaultAsync();
 
-        if (concert == null)
+        if (concert is null)
         {
-            this._logger.LogInformation("Concert with given id: {id} does not exist");
-            return Results.BadRequest();
+            this._logger.LogInformation("Concert {id} does not exist", id);
+            return NotFound();
         }
 
         try
@@ -159,14 +171,14 @@ public class ConcertController : ControllerBase {
                 Key = "delete_concert",
                 Value = concert.Id
             };
-            await this._kafkaProducer.ProduceAsync("concerts", deleteConcertMessage);
-            this._logger.LogInformation("Deleted concert with id: {id}", id);
-            return Results.Ok(concert);;
+            this._kafkaProducer.Produce("concerts", deleteConcertMessage);
+            this._logger.LogInformation("Deleted concert {id}", id);
+            return Ok(concert);
         }
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error deleting concert with id: {id}", id);
-            return Results.BadRequest($"There was an error deleting concert with id: {id}");
+            return BadRequest($"There was an error deleting concert with id: {id}");
         }
     }
 }

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-
+using GraphQL.AspNet.Attributes;
 using GraphQL.AspNet.Controllers;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
@@ -20,11 +20,13 @@ public class ConcertGraphController : GraphController
 
     [Query]
     public async Task<IEnumerable<Concert>> All() {
+        this._logger.LogInformation("Getting all concerts");
         return await this._dbContext.Concerts.ToListAsync();
     }
 
     [Query]
     public async Task<Concert> Concert(int id) {
+        this._logger.LogInformation("Getting concert {id}", id);
         return await this._dbContext.Concerts
             .Where(c => c.Id == id)
             .SingleAsync();
@@ -32,6 +34,7 @@ public class ConcertGraphController : GraphController
     
     [Query]
     public async Task<IEnumerable<Concert>> Concerts(ICollection<int> ids) {
+        this._logger.LogInformation("Getting concerts {ids}", ids);
         return await this._dbContext.Concerts
             .Where(c => ids.Contains(c.Id))
             .ToListAsync();
