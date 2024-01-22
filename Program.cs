@@ -120,6 +120,10 @@ public class Program
 
     private static void ConfigureApplication(WebApplication app)
     {
+        string app_base = app.Configuration["APP_BASE"] ?? "/";
+        app.UsePathBase(app_base);
+        app.UseRouting();
+
         ConfigureSwaggerUI(app);
 
         app.MapPrometheusScrapingEndpoint();
