@@ -86,7 +86,8 @@ public class Program
             .Configure(options => {
                 options.Configure(new ProducerConfig {
                     BootstrapServers = kafkaUrl
-                }).Serialize(new JsonMessageSerializer<KafkaMessage>());
+                }).Serialize(new JsonMessageSerializer<KafkaMessage>())
+                  .Deserialize(new JsonMessageSerializer<KafkaMessage>());
             });
     }
 
