@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
+using PlanningService.Kafka;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace PlanningService.Concerts;
@@ -10,14 +11,17 @@ namespace PlanningService.Concerts;
 [Route("[controller]")]
 public class ConcertController : ControllerBase {
     private readonly ILogger<ConcertController> _logger;
+    private readonly HttpContext _httpContext;
     private readonly PlanningDbContext _dbContext;
-    private readonly IProducer<string, int> _kafkaProducer;
+    private readonly IProducer<string, KafkaMessage> _kafkaProducer;
 
     public ConcertController(
             ILogger<ConcertController> logger,
-            IProducer<string, int> kafkaProducer,
+            IHttpContextAccessor httpContextAccessor,
+            IProducer<string, KafkaMessage> kafkaProducer,
             PlanningDbContext dbContext) {
         this._logger = logger;
+        this._httpContext = httpContextAccessor.HttpContext;
         this._dbContext = dbContext;
         this._kafkaProducer = kafkaProducer;
     }
@@ -88,9 +92,12 @@ public class ConcertController : ControllerBase {
         {
             this._dbContext.Concerts.Add(concert);
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> addConcertMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> addConcertMessage = new Message<string, KafkaMessage>() {
                 Key = "add_concert",
-                Value = concert.Id
+                Value = new KafkaMessage {
+                    EntityId = concert.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("concerts", addConcertMessage);
             this._logger.LogInformation("Added concert {id}", concert.Id);
@@ -132,9 +139,12 @@ public class ConcertController : ControllerBase {
         try
         {
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> editConcertMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> editConcertMessage = new Message<string, KafkaMessage>() {
                 Key = "edit_concert",
-                Value = concert.Id
+                Value = new KafkaMessage {
+                    EntityId = concert.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("concerts", editConcertMessage);
             this._logger.LogInformation("Updated concert {id}", id);
@@ -167,9 +177,12 @@ public class ConcertController : ControllerBase {
         {
             this._dbContext.Remove(concert);
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> deleteConcertMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> deleteConcertMessage = new Message<string, KafkaMessage>() {
                 Key = "delete_concert",
-                Value = concert.Id
+                Value = new KafkaMessage {
+                    EntityId = concert.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("concerts", deleteConcertMessage);
             this._logger.LogInformation("Deleted concert {id}", id);

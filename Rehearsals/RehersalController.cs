@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlanningService.Database;
+using PlanningService.Kafka;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace PlanningService.Rehearsals;
@@ -10,14 +11,17 @@ namespace PlanningService.Rehearsals;
 [Route("[controller]")]
 public class RehearsalController : ControllerBase {
     private readonly ILogger<RehearsalController> _logger;
+    private readonly HttpContext _httpContext;
     private readonly PlanningDbContext _dbContext;
-    private readonly IProducer<string, int> _kafkaProducer;
+    private readonly IProducer<string, KafkaMessage> _kafkaProducer;
 
     public RehearsalController(
             ILogger<RehearsalController> logger,
-            IProducer<string, int> kafkaProducer,
+            IHttpContextAccessor httpContextAccessor,
+            IProducer<string, KafkaMessage> kafkaProducer,
             PlanningDbContext dbContext) {
         this._logger = logger;
+        this._httpContext = httpContextAccessor.HttpContext;
         this._dbContext = dbContext;
         this._kafkaProducer = kafkaProducer;
     }
@@ -95,9 +99,12 @@ public class RehearsalController : ControllerBase {
         {
             this._dbContext.Rehearsals.Add(rehearsal);
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> addRehearsalMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> addRehearsalMessage = new Message<string, KafkaMessage>() {
                 Key = "add_rehearsal",
-                Value = rehearsal.Id
+                Value = new KafkaMessage {
+                    EntityId = rehearsal.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("rehearsals", addRehearsalMessage);
             this._logger.LogInformation("Added rehearsal {id}", rehearsal.Id);
@@ -137,9 +144,12 @@ public class RehearsalController : ControllerBase {
         try
         {
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> editRehearsalMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> editRehearsalMessage = new Message<string, KafkaMessage>() {
                 Key = "edit_rehearsal",
-                Value = rehearsal.Id
+                Value = new KafkaMessage {
+                    EntityId = rehearsal.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("rehearsals", editRehearsalMessage);
             this._logger.LogInformation("Updated rehearsal {id}", id);
@@ -168,9 +178,12 @@ public class RehearsalController : ControllerBase {
         try
         {
             this._dbContext.Remove(rehearsal);
-            Message<string, int> deleteRehearsalMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> deleteRehearsalMessage = new Message<string, KafkaMessage>() {
                 Key = "delete_rehearsal",
-                Value = rehearsal.Id
+                Value = new KafkaMessage {
+                    EntityId = rehearsal.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("rehearsals", deleteRehearsalMessage);
             await this._dbContext.SaveChangesAsync();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using PlanningService.Database;
+using PlanningService.Kafka;
 using Serilog;
 using Serilog.Events;
 
@@ -85,7 +86,7 @@ public class Program
             .Configure(options => {
                 options.Configure(new ProducerConfig {
                     BootstrapServers = kafkaUrl
-                });
+                }).Serialize(new JsonMessageSerializer<KafkaMessage>());
             });
     }
 
