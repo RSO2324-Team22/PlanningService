@@ -135,7 +135,7 @@ public class Program
 
     private static void ConfigureSwaggerUI(WebApplication app)
     {
-        string app_base = app.Configuration["APP_BASE"] ?? "/";
+        string app_base = app.Configuration["APP_BASE"] ?? "";
         // Configure the HTTP request pipeline.
         app.UseSwagger();
         app.UseSwaggerUI(options =>
