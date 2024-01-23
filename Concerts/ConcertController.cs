@@ -21,7 +21,7 @@ public class ConcertController : ControllerBase {
             IProducer<string, KafkaMessage> kafkaProducer,
             PlanningDbContext dbContext) {
         this._logger = logger;
-        this._httpContext = httpContextAccessor.HttpContext;
+        this._httpContext = httpContextAccessor.HttpContext!;
         this._dbContext = dbContext;
         this._kafkaProducer = kafkaProducer;
     }
@@ -101,7 +101,8 @@ public class ConcertController : ControllerBase {
             };
             this._kafkaProducer.Produce("concerts", addConcertMessage);
             this._logger.LogInformation("Added concert {id}", concert.Id);
-            return CreatedAtAction(nameof(GetConcertById), concert);
+            return CreatedAtAction(nameof(GetConcertById), 
+                                   new { id = concert.Id}, concert);
         }
         catch (Exception e)
         {

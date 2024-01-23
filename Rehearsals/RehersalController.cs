@@ -21,57 +21,27 @@ public class RehearsalController : ControllerBase {
             IProducer<string, KafkaMessage> kafkaProducer,
             PlanningDbContext dbContext) {
         this._logger = logger;
-        this._httpContext = httpContextAccessor.HttpContext;
+        this._httpContext = httpContextAccessor.HttpContext!;
         this._dbContext = dbContext;
         this._kafkaProducer = kafkaProducer;
     }
 
     [HttpGet]
     [SwaggerOperation("GetRehearsals")]
-    public async Task<IEnumerable<Rehearsal>> GetRehearsals() {
-        this._logger.LogInformation("Getting rehearsals");
+    public async Task<IEnumerable<Rehearsal>> GetRehearsals()
+    {
+        this._logger.LogInformation("Getting all rehearsals");
         return await this._dbContext.Rehearsals.ToListAsync();
-    }
-
-    [HttpGet]
-    [Route("confirmed")]
-    [SwaggerOperation("GetConfirmedRehearsals")]
-    public async Task<IEnumerable<Rehearsal>> GetConfirmed() {
-        this._logger.LogInformation("Getting rehearsals with Confirmed status");
-        return await this._dbContext.Rehearsals
-            .Where(r => r.Status == RehearsalStatus.Confirmed)
-            .ToListAsync();
-    }
-
-    [HttpGet]
-    [Route("confirmed/intensive")]
-    [SwaggerOperation("GetConfirmedIntensiveRehearsals")]
-    public async Task<IEnumerable<Rehearsal>> GetConfirmedIntensive() {
-        this._logger.LogInformation("Getting rehearsals with Confirmed status and Intensive type");
-        return await this._dbContext.Rehearsals
-            .Where(r => r.Status == RehearsalStatus.Confirmed &&
-                    r.Type == RehearsalType.Intensive)
-            .ToListAsync();
-    }
-
-    [HttpGet]
-    [Route("confirmed/extra")]
-    [SwaggerOperation("GetConfirmedExtraRehearsals")]
-    public async Task<IEnumerable<Rehearsal>> GetConfirmedExtra() {
-        this._logger.LogInformation("Getting rehearsals with Extra type");
-        return await this._dbContext.Rehearsals
-            .Where(r => r.Status == RehearsalStatus.Confirmed &&
-                    r.Type == RehearsalType.Extra)
-            .ToListAsync();
     }
 
     [HttpGet]
     [Route("{id}")]
     [SwaggerOperation("GetRehearsalById")]
-    public async Task<ActionResult<Rehearsal>> GetRehearsalById(int id) {
+    public async Task<ActionResult<Rehearsal>> GetRehearsalById(int id)
+    {
         this._logger.LogInformation("Getting rehearsal {id}", id);
         Rehearsal? rehearsal = await this._dbContext.Rehearsals
-            .Where(r => r.Id == id)
+            .Where(c => c.Id == id)
             .SingleOrDefaultAsync();
 
         if (rehearsal is null) {
@@ -81,9 +51,31 @@ public class RehearsalController : ControllerBase {
         return rehearsal;
     }
 
+    [HttpGet]
+    [Route("confirmed")]
+    [SwaggerOperation("GetConfirmedRehearsals")]
+    public async Task<ActionResult<IEnumerable<Rehearsal>>> GetConfirmedRehearsals()
+    {
+        this._logger.LogInformation("Getting rehearsals with Confirmed status");
+        try
+        {
+            var rehearsals = await this._dbContext.Rehearsals
+                .Where(rehearsal => rehearsal.Status == RehearsalStatus.Confirmed)
+                .ToListAsync();
+            return Ok(rehearsals);
+        }
+        catch (Exception e)
+        {
+            const string errMsg = "Error while fetching rehearsals";
+            this._logger.LogError(e, errMsg);
+            return BadRequest(errMsg);
+        }
+    }
+
     [HttpPost]
     [SwaggerOperation("AddRehearsal")]
-    public async Task<IResult> AddRehearsal([FromBody] CreateRehearsalModel model) {
+    public async Task<ActionResult<Rehearsal>> AddRehearsal([FromBody] CreateRehearsalModel model)
+    {
         this._logger.LogInformation("Adding new rehearsal");
         Rehearsal rehearsal = new Rehearsal {
             Title = model.Title,
@@ -108,23 +100,25 @@ public class RehearsalController : ControllerBase {
             };
             this._kafkaProducer.Produce("rehearsals", addRehearsalMessage);
             this._logger.LogInformation("Added rehearsal {id}", rehearsal.Id);
-            return Results.Created(nameof(Index), rehearsal);
+            return CreatedAtAction(nameof(GetRehearsalById), 
+                                   new { id = rehearsal.Id}, rehearsal);
         }
         catch (Exception e)
         {
             const string errMsg = "Error while adding rehearsal";
             this._logger.LogError(e, errMsg);
-            return Results.BadRequest(errMsg);
+            return BadRequest(errMsg);
         }
     }
 
     [HttpPut]
     [Route("{id}")]
     [SwaggerOperation("EditRehearsal")]
-    public async Task<ActionResult<Rehearsal>> EditRehearsal(int id, [FromBody] CreateRehearsalModel model) {
+    public async Task<ActionResult<Rehearsal>> EditRehearsal(int id, [FromBody] CreateRehearsalModel model)
+    {
         this._logger.LogInformation("Editing rehearsal {id}", id);
         Rehearsal? rehearsal = await this._dbContext.Rehearsals
-            .Where(r => r.Id == id)
+            .Where(c => c.Id == id)
             .SingleOrDefaultAsync();
 
         if (rehearsal is null)
@@ -153,31 +147,35 @@ public class RehearsalController : ControllerBase {
             };
             this._kafkaProducer.Produce("rehearsals", editRehearsalMessage);
             this._logger.LogInformation("Updated rehearsal {id}", id);
-            return CreatedAtAction(nameof(GetRehearsalById), rehearsal);
+            return Ok(rehearsal);
         }
         catch (Exception e)
         {
-            this._logger.LogError(e, "There was an error editing rehearsal {id}", id);
-            return BadRequest($"There was an error editing rehearsal {id}");
+            this._logger.LogError(e, "There was an error editing rehearsal with id: {id}", id);
+            return BadRequest($"There was an error editing rehearsal with id: {id}");
         }
     }
 
     [HttpDelete]
     [Route("{id}")]
     [SwaggerOperation("DeleteRehearsal")]
-    public async Task<ActionResult<Rehearsal>> DeleteRehearsal(int id) {
+    public async Task<ActionResult<Rehearsal>> DeleteRehearsal(int id)
+    {
         this._logger.LogInformation("Deleting rehearsal {id}", id);
         Rehearsal? rehearsal = await this._dbContext.Rehearsals
-            .Where(r => r.Id == id)
+            .Where(c => c.Id == id)
             .SingleOrDefaultAsync();
 
-        if (rehearsal is null) {
+        if (rehearsal is null)
+        {
+            this._logger.LogInformation("Rehearsal {id} does not exist", id);
             return NotFound();
         }
 
         try
         {
             this._dbContext.Remove(rehearsal);
+            await this._dbContext.SaveChangesAsync();
             Message<string, KafkaMessage> deleteRehearsalMessage = new Message<string, KafkaMessage>() {
                 Key = "delete_rehearsal",
                 Value = new KafkaMessage {
@@ -186,14 +184,13 @@ public class RehearsalController : ControllerBase {
                 }
             };
             this._kafkaProducer.Produce("rehearsals", deleteRehearsalMessage);
-            await this._dbContext.SaveChangesAsync();
             this._logger.LogInformation("Deleted rehearsal {id}", id);
             return Ok(rehearsal);
         }
         catch (Exception e)
         {
-            this._logger.LogError(e, "There was an error deleting rehearsal {id}", id);
-            return BadRequest($"There was an error deleting rehearsal {id}");
+            this._logger.LogError(e, "There was an error deleting rehearsal with id: {id}", id);
+            return BadRequest($"There was an error deleting rehearsal with id: {id}");
         }
     }
 }
