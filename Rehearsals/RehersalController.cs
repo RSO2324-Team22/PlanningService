@@ -66,9 +66,8 @@ public class RehearsalController : ControllerBase {
         }
         catch (Exception e)
         {
-            const string errMsg = "Error while fetching rehearsals";
-            this._logger.LogError(e, errMsg);
-            return BadRequest(errMsg);
+            this._logger.LogError(e, "Error while fetching rehearsals");
+            throw;
         }
     }
 
@@ -105,9 +104,8 @@ public class RehearsalController : ControllerBase {
         }
         catch (Exception e)
         {
-            const string errMsg = "Error while adding rehearsal";
-            this._logger.LogError(e, errMsg);
-            return BadRequest(errMsg);
+            this._logger.LogError(e, "Error while adding rehearsal");
+            throw;
         }
     }
 
@@ -152,7 +150,7 @@ public class RehearsalController : ControllerBase {
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error editing rehearsal with id: {id}", id);
-            return BadRequest($"There was an error editing rehearsal with id: {id}");
+            throw;
         }
     }
 
@@ -190,7 +188,7 @@ public class RehearsalController : ControllerBase {
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error deleting rehearsal with id: {id}", id);
-            return BadRequest($"There was an error deleting rehearsal with id: {id}");
+            throw;
         }
     }
 }

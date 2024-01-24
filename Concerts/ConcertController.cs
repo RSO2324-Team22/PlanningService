@@ -66,9 +66,8 @@ public class ConcertController : ControllerBase {
         }
         catch (Exception e)
         {
-            const string errMsg = "Error while fetching concerts";
-            this._logger.LogError(e, errMsg);
-            return BadRequest(errMsg);
+            this._logger.LogError(e, "Error while fetching concerts");
+            throw;
         }
     }
 
@@ -106,9 +105,8 @@ public class ConcertController : ControllerBase {
         }
         catch (Exception e)
         {
-            const string errMsg = "Error while adding concert";
-            this._logger.LogError(e, errMsg);
-            return BadRequest(errMsg);
+            this._logger.LogError(e, "Error while adding concert");
+            throw;
         }
     }
 
@@ -154,7 +152,7 @@ public class ConcertController : ControllerBase {
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error editing concert with id: {id}", id);
-            return BadRequest($"There was an error editing concert with id: {id}");
+            throw;
         }
     }
 
@@ -192,7 +190,7 @@ public class ConcertController : ControllerBase {
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error deleting concert with id: {id}", id);
-            return BadRequest($"There was an error deleting concert with id: {id}");
+            throw;
         }
     }
 }
